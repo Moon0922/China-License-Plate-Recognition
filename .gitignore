@@ -1,0 +1,7 @@
+bin/
+.vs/
+debug/
+cximage/
+opencv/
+ipch/
+China-License-Plate-Recognition/x64/
