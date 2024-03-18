@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CVideoProcessor.h"
-
+#include "CNLPREngine.h"
 #include "China-License-Plate-Recognition.h"
 #include "China-License-Plate-RecognitionDlg.h"
 
@@ -12,14 +12,14 @@ CVideoProcessor::CVideoProcessor(void)
 	m_nVideoFrameCount = 0;
 	m_dblVideoTotalTime = 0;
 	m_dblVideoCurrentTime = 0;
-	//m_hEngineHandle = LPR_EngineCreate();
+	m_hEngineHandle = CNLPR_EngineHandleCreate();
 	InitializeCriticalSection(&m_CS);
 }
 
 CVideoProcessor::~CVideoProcessor(void)
 {
 	StopThread();
-	//LPR_EngineDestroy(m_hEngineHandle);
+	CNLPR_EngineHandleDestroy(m_hEngineHandle);
 	DeleteCriticalSection(&m_CS);
 }
 
@@ -79,8 +79,8 @@ void CVideoProcessor::VideoOpen(CString strVideoPath)
 	}
 
 	SetVideoBuffer(frame);
-	m_nVideoFramePerSecond = cap.get(CAP_PROP_FPS);
-	m_nVideoFrameCount = cap.get(CAP_PROP_FRAME_COUNT);
+	m_nVideoFramePerSecond = cap.get(cv::CAP_PROP_FPS);
+	m_nVideoFrameCount = cap.get(cv::CAP_PROP_FRAME_COUNT);
 	m_dblVideoTotalTime = m_nVideoFrameCount / (double)m_nVideoFramePerSecond;
 	m_dblVideoCurrentTime = 0;
 
@@ -129,7 +129,7 @@ CString CVideoProcessor::GetVideoTime()
 
 int CVideoProcessor::GetPos()
 {
-	double dblPos = cap.get(CAP_PROP_POS_FRAMES) / (double)cap.get(CAP_PROP_FRAME_COUNT) * PROGRESS_RANGE + 0.5;
+	double dblPos = cap.get(cv::CAP_PROP_POS_FRAMES) / (double)cap.get(cv::CAP_PROP_FRAME_COUNT) * PROGRESS_RANGE + 0.5;
 	return min(int(dblPos), PROGRESS_RANGE);
 }
 
@@ -146,27 +146,31 @@ void CVideoProcessor::StopThread()
 
 void CVideoProcessor::LPRPerFrame(cv::Mat& frame)
 {
-	//Mat gray;
-	//cvtColor(frame, gray, COLOR_BGR2GRAY);
+	cv::Mat gray;
+	cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-	//LPRResultData m_ResultData;
+	InitSet initSet;
+	memset(&initSet, 0, sizeof(InitSet));
+	initSet.skewAng = 0;
+	CARPLATE_DATA	carData;
+	int pTime = (int)clock();
+	int nPlateNum = CNLPR_EngineProcess(m_hEngineHandle, gray.data, gray.cols, gray.rows, &initSet, &carData);
+	pTime = (int)clock() - pTime;
 
-	//int nPlateNum = LPR_Process(m_hEngineHandle, gray.data, gray.cols, gray.rows, &m_ResultData);
+	if (nPlateNum) {
 
-	//if (nPlateNum) {
-
-	//	for (int j = 0; j < nPlateNum; j++)
-	//	{
-	//		int left = m_ResultData.PlateData[j].lprRect.left - 10;
-	//		int top = m_ResultData.PlateData[j].lprRect.top - 10;
-	//		int width = m_ResultData.PlateData[j].lprRect.right + 10 - left;
-	//		int height = m_ResultData.PlateData[j].lprRect.bottom + 10 - top;
-	//		rectangle(frame, Rect(left, top, width, height), Scalar(255, 0, 0));
-	//		char szResult[100];
-	//		sprintf(szResult, "%s-[conf: %.2f]\%", m_ResultData.PlateData[j].lprStr, m_ResultData.PlateData[j].conf);
-	//		putText(frame, szResult, Point(left, top), FONT_HERSHEY_PLAIN, 1.0, Scalar(0, 255, 255));
-	//	}
-	//}
+		for (int i = 0; i < nPlateNum; i++)
+		{
+			int left = carData.pPlate[i].rtPlate.left;
+			int top = carData.pPlate[i].rtPlate.top;
+			int width = carData.pPlate[i].rtPlate.right - left;
+			int height = carData.pPlate[i].rtPlate.bottom + 10;
+			rectangle(frame, cv::Rect(left, top, width, height), cv::Scalar(0, 255, 255));
+			char szResult[100];
+			sprintf(szResult, "%s-[conf: %.2f]\%", carData.pPlate[i].szLicense, carData.pPlate[i].nTrust);
+			putText(frame, szResult, cv::Point(left, top), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0, 255, 255));
+		}
+	}
 }
 
 void CVideoProcessor::SetVideoBuffer(cv::Mat& mat)
@@ -206,13 +210,13 @@ void CVideoProcessor::VideoProcess(LPARAM lParam)
 			break;
 		}
 
-		pProcess->m_dblVideoCurrentTime = pProcess->cap.get(CAP_PROP_POS_FRAMES) / (double)pProcess->m_nVideoFramePerSecond;
-		nTime = getTickCount();
+		pProcess->m_dblVideoCurrentTime = pProcess->cap.get(cv::CAP_PROP_POS_FRAMES) / (double)pProcess->m_nVideoFramePerSecond;
+		nTime = cv::getTickCount();
 
 		pProcess->LPRPerFrame(pProcess->frame);
 
-		nTime = getTickCount() - nTime;
-		dblTime = nTime / getTickFrequency() * 1000.0;
+		nTime = cv::getTickCount() - nTime;
+		dblTime = nTime / cv::getTickFrequency() * 1000.0;
 #if 0
 		char time[100] = { 0 };
 		sprintf(time, "Time = %.2f ms", dblTime);

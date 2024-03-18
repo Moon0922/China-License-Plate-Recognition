@@ -11,8 +11,6 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-using namespace cv;
-
 class CVideoProcessor
 {
 
@@ -39,7 +37,7 @@ protected:
 	HANDLE m_hVideoThread;
 public:
 	cv::VideoCapture cap;
-	cv::Mat			 frame;
+	cv::Mat		 frame;
 	int			 m_nVideoState;
 	CxImage		 m_xVideoImage;
 

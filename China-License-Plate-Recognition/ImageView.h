@@ -9,7 +9,7 @@
 #define		COLOR_WHITE		RGB(255, 255, 255)
 #define		COLOR_GRAY		RGB(122, 122, 122)
 // CImageView
-//#include "CRLPREngineExport.h"
+#include "CNLPREngine.h"
 class CImageView : public CWnd
 {
 	DECLARE_DYNAMIC(CImageView)
@@ -25,7 +25,7 @@ public:
 	void	InitView(COLORREF dwColor = COLOR_BLACK);
 	BOOL	UpdateView();
 	void	SetImage(HBITMAP hBitmap);
-	//void	SetImage(HBITMAP hBitmap, LPRResultData lprData, int lprCount);
+	void	SetImage(HBITMAP hBitmap, CARPLATE_DATA carData);
 	void	DrawBackground(CDC* pDC);
 	void	DrawImage(CDC* pDC);
 	void	DrawRectangle(CDC* pDC);
@@ -38,7 +38,7 @@ public:
 	COLORREF m_dwColor;
 	HBITMAP	m_hBitmap;
 	BITMAP	m_bInfo;
-	//LPRResultData m_LPRData;
+	CARPLATE_DATA m_carPlateData;
 	int		m_LPRCount;
 	float	m_fScale;
 	int     m_nScaleW;

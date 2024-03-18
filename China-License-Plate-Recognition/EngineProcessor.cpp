@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "EngineProcessor.h"
-//#include "CostaRicaLPR.h"
+#include "CNLPREngine.h"
 #include "ImageView.h"
 #include "opencv2/opencv.hpp"
 #include <time.h>
@@ -11,14 +11,14 @@ CEngineProcessor::CEngineProcessor()
 	m_hLPRThread = 0;
 	m_nProcStatus = PROC_NONE;
 	m_curFileIndex = -1;
-	//m_hEngineHandle = LPR_EngineCreate();
+	m_hEngineHandle = CNLPR_EngineHandleCreate();
 	InitializeCriticalSection(&m_CS);
 }
 
 CEngineProcessor::~CEngineProcessor()
 {
 	Stop();
-	//LPR_EngineDestroy(m_hEngineHandle);
+	CNLPR_EngineHandleDestroy(m_hEngineHandle);
 	DeleteCriticalSection(&m_CS);
 }
 
@@ -203,33 +203,27 @@ void CEngineProcessor::StillImage(int index)
 	xImage.Create(w, h, 24);
 	for (int y = 0; y < h; y++)
 		memcpy(xImage.GetBits(y), mImage.data + (h - 1 - y) * 3 * mImage.cols, 3 * mImage.cols);
-	Mat gray;
-	cvtColor(mImage, gray, COLOR_BGR2GRAY);
+	
 
-	//LPRResultData m_ResultData;
-	//int pTime = (int)clock();
-	//int nPlateNum = LPR_Process(m_hEngineHandle, gray.data, gray.cols, gray.rows, &m_ResultData);
-	//pTime = (int)clock() - pTime;
-	//CString temp;
-	//temp.Format(_T("%dms"), pTime);
-	//m_wndListCtrl->SetItemText(index, 3, temp);
-	//CString lprResult = _T("LPR_Failed"), strConf = _T("");
-	//if (nPlateNum) {
-	//	lprResult = _T("");
-	//	for (int j = 0; j < nPlateNum; j++)
-	//	{
-	//		lprResult += CString(m_ResultData.PlateData[j].lprStr, strlen(m_ResultData.PlateData[j].lprStr));
-	//		temp.Format(_T("%.2f"), m_ResultData.PlateData[j].conf);
-	//		strConf += temp + _T("%");
-	//		if (index < nPlateNum - 1)
-	//		{
-	//			strConf += _T("_");
-	//			lprResult += _T("_");
-	//		}
-	//	}
-	//}
-	//m_wndListCtrl->SetItemText(index, 4, strConf);
-	//m_wndListCtrl->SetItemText(index, 2, lprResult);
-	//((CImageView*)m_pImageView)->SetImage(xImage.MakeBitmap(), m_ResultData, nPlateNum);
-	((CImageView*)m_pImageView)->SetImage(xImage.MakeBitmap());
+	InitSet iniSet;
+	memset(&iniSet, 0, sizeof(InitSet));
+	iniSet.skewAng = 0;
+	CARPLATE_DATA	carData;
+	int pTime = (int)clock();
+	int nPlateNum = CNLPR_EngineProcess(m_hEngineHandle, mImage.data, mImage.cols, mImage.rows, &iniSet, &carData);
+	pTime = (int)clock() - pTime;
+	CString temp;
+	temp.Format(_T("%dms"), pTime);
+	m_wndListCtrl->SetItemText(index, 3, temp);
+
+	if (nPlateNum)
+	{
+		CString strConf;
+		CString lprResult = CString(carData.pPlate[0].szLicense, strlen(carData.pPlate[0].szLicense) - 1);
+		MultiByteToWideChar(CP_UTF8, 0, carData.pPlate[0].szLicense, -1, lprResult.GetBuffer(), strlen(carData.pPlate[0].szLicense));
+		strConf.Format(_T("%d"), carData.pPlate[0].nTrust);
+		m_wndListCtrl->SetItemText(index, 4, strConf + _T("%"));
+		m_wndListCtrl->SetItemText(index, 2, lprResult);
+	}
+	((CImageView*)m_pImageView)->SetImage(xImage.MakeBitmap(), carData);
 }

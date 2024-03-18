@@ -67,17 +67,16 @@ void CImageView::SetImage(HBITMAP hBitmap)
 	UpdateView();
 }
 
-//void CImageView::SetImage(HBITMAP hBitmap, LPRResultData lprData, int lprCount)
-//{
-//	if (m_hBitmap != NULL)
-//		DeleteObject(m_hBitmap);
-//	m_hBitmap = hBitmap;
-//	GetObject(hBitmap, sizeof(BITMAP), &m_bInfo);
-//	m_LPRCount = lprCount;
-//	memset(&m_LPRData, 0, sizeof(LPRResultData));
-//	memcpy(&m_LPRData, &lprData, sizeof(LPRResultData));
-//	UpdateView();
-//}
+void CImageView::SetImage(HBITMAP hBitmap, CARPLATE_DATA carData)
+{
+	if (m_hBitmap != NULL)
+		DeleteObject(m_hBitmap);
+	m_hBitmap = hBitmap;
+	GetObject(hBitmap, sizeof(BITMAP), &m_bInfo);
+	memset(&m_carPlateData, 0, sizeof(CARPLATE_DATA));
+	memcpy(&m_carPlateData, &carData, sizeof(CARPLATE_DATA));
+	UpdateView();
+}
 
 void CImageView::DrawBackground(CDC * pDC)
 {
@@ -109,50 +108,62 @@ void CImageView::DrawImage(CDC * pDC)
 
 void CImageView::DrawRectangle(CDC * pDC)
 {
-	//if (m_LPRCount <= 0)
-	//	return;
-	//CPen penRegion(PS_SOLID, 2, RGB(0, 0, 255));
-	//CPen Selpen(PS_SOLID, 3, RGB(255, 0, 0));
-	//pDC->SelectStockObject(NULL_BRUSH);
-	//pDC->SelectObject(&Selpen);
-	//for (int i = 0; i < m_LPRCount; i++) {
-	//	int left = m_nLeft + (m_LPRData.PlateData[i].lprRect.left - 10) * m_fScale;
-	//	int right = m_nLeft + (m_LPRData.PlateData[i].lprRect.right + 10) * m_fScale;
-	//	int top = m_nTop + (m_LPRData.PlateData[i].lprRect.top - 10) * m_fScale;
-	//	int bottom = m_nTop + (m_LPRData.PlateData[i].lprRect.bottom + 10) * m_fScale;
-	//	CRect rt = CRect(left, top, right, bottom);
-	//	pDC->Rectangle(rt);
+	if (m_carPlateData.nPlate <= 0)
+		return;
+	CPen penRegion(PS_SOLID, 2, RGB(0, 0, 255));
+	CPen Selpen(PS_SOLID, 3, RGB(255, 0, 0));
+	pDC->SelectStockObject(NULL_BRUSH);
+	pDC->SelectObject(&Selpen);
+	for (int i = 0; i < m_carPlateData.nPlate; i++) {
+		int left = m_nLeft + (m_carPlateData.pPlate[i].rtPlate.left - 10) * m_fScale;
+		int right = m_nLeft + (m_carPlateData.pPlate[i].rtPlate.right + 10) * m_fScale;
+		int top = m_nTop + (m_carPlateData.pPlate[i].rtPlate.top - 10) * m_fScale;
+		int bottom = m_nTop + (m_carPlateData.pPlate[i].rtPlate.bottom + 10) * m_fScale;
+		CRect rt = CRect(left, top, right, bottom);
+		pDC->Rectangle(rt);
 
-	//	CFont font, *pOldFont;
-	//	int hei = 20;
-	//	VERIFY
-	//	(
-	//		font.CreateFont(
-	//			hei,						// nHeight
-	//			0,							// nWidth
-	//			0,							// nEscapement
-	//			0,							// nOrientation
-	//			700,						// nWeight
-	//			FALSE,						// bItalic
-	//			FALSE,						// bUnderline
-	//			0,							// cStrikeOut
-	//			DEFAULT_CHARSET,			// nCharSet,//<cch>
-	//			OUT_DEFAULT_PRECIS,			// nOutPrecision
-	//			CLIP_DEFAULT_PRECIS,	    // nClipPrecision
-	//			PROOF_QUALITY,				// nQuality
-	//			VARIABLE_PITCH,				// nPitchAndFamily
-	//			_T("Times New Roman")		// lpszFacename
-	//		)
-	//	);
-	//	pOldFont = pDC->SelectObject(&font);
-	//	CString strObjTemp = CString(m_LPRData.PlateData[i].lprStr, strlen(m_LPRData.PlateData[i].lprStr));
-	//	CString temp;
-	//	temp.Format(_T("-[conf: %.2f]"), m_LPRData.PlateData[i].conf);
-	//	strObjTemp += temp + _T("%");
-	//	pDC->SetTextColor(RGB(20, 20, 200));
-	//	pDC->SetBkColor(RGB(200, 200, 20));
-	//	pDC->TextOut(left, bottom, strObjTemp);
-	//}
+		//for (int j = 0; j < m_carPlateData.pPlate[i].nLetNum; j++) 
+		//{
+		//	int left = m_nLeft + (m_carPlateData.pPlate[i].blob[j].left) * m_fScale;
+		//	int right = m_nLeft + (m_carPlateData.pPlate[i].blob[j].right) * m_fScale;
+		//	int top = m_nTop + (m_carPlateData.pPlate[i].blob[j].top) * m_fScale;
+		//	int bottom = m_nTop + (m_carPlateData.pPlate[i].blob[j].bottom) * m_fScale;
+		//	CRect rt = CRect(left, top, right, bottom);
+		//	pDC->Rectangle(rt);
+		//}
+
+		CFont font, *pOldFont;
+		int hei = 20;
+		VERIFY
+		(
+			font.CreateFont(
+				hei,						// nHeight
+				0,							// nWidth
+				0,							// nEscapement
+				0,							// nOrientation
+				700,						// nWeight
+				FALSE,						// bItalic
+				FALSE,						// bUnderline
+				0,							// cStrikeOut
+				DEFAULT_CHARSET,			// nCharSet,//<cch>
+				OUT_DEFAULT_PRECIS,			// nOutPrecision
+				CLIP_DEFAULT_PRECIS,	    // nClipPrecision
+				PROOF_QUALITY,				// nQuality
+				VARIABLE_PITCH,				// nPitchAndFamily
+				_T("Times New Roman")		// lpszFacename
+			)
+		);
+		pOldFont = pDC->SelectObject(&font);
+		
+		CString lprResult = CString(m_carPlateData.pPlate[i].szLicense, strlen(m_carPlateData.pPlate[i].szLicense) - 1);
+		MultiByteToWideChar(CP_UTF8, 0, m_carPlateData.pPlate[i].szLicense, -1, lprResult.GetBuffer(), 20);
+		CString temp;
+		temp.Format(_T("-[conf: %d"), m_carPlateData.pPlate[i].nTrust);
+		lprResult += temp + _T("%]");
+		pDC->SetTextColor(RGB(20, 20, 200));
+		pDC->SetBkColor(RGB(200, 200, 20));
+		pDC->TextOut(left, bottom, lprResult);
+	}
 }
 
 

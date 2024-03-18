@@ -170,14 +170,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>../cximage/include;../opencv/include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../cximage/include;../opencv/include;../CNLPREngine;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>../cximage/lib;../opencv/lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cximagecrt.lib;opencv_world490.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../cximage/lib;../opencv/lib;../CNLPREngine;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cximagecrt.lib;opencv_world490.lib;CNLPREngine.lib;</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
